@@ -5,5 +5,12 @@
  * @returns {object} - returns the new object
  */
 export const pick = (obj, ...fields) => {
+  const entries = [];
 
+  for (const [key, value] of Object.entries(obj)) {
+    if (fields.includes(key)) {
+      entries.push([key, value]);
+    }
+  }
+  return Object.fromEntries(entries);
 };
