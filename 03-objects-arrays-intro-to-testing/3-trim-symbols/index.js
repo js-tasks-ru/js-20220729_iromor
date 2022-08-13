@@ -7,11 +7,14 @@
 export function trimSymbols(string, size) {
 
   if (size === 0) { return ''; }
-  let result = [];
-  let count = size;
-  const arr = string.split('');
-
-
-
   
+  const newStr = string.slice(0, size);
+  const arr = [...string.slice(size)];
+
+  return arr.reduce((accumStr, val) => {
+    if (!accumStr.endsWith(val.repeat(size))) {
+      return accumStr + val;
+    }
+    return accumStr;
+  }, newStr);
 }
