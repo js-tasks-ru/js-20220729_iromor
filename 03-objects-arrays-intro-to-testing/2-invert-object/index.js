@@ -5,4 +5,10 @@
  */
 export function invertObj(obj) {
 
+  if (typeof obj !== 'object') { return undefined; }
+  const newObj = [];
+  for (let key of Object.keys(obj)) {
+    newObj.push([obj[key], key]);
+  }
+  return Object.fromEntries(newObj);
 }
