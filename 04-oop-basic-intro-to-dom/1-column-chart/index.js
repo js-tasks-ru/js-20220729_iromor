@@ -1,95 +1,100 @@
 export default class ColumnChart {
 
-  // chartHeight = 50;
+  chartHeight = 50;
 
   constructor({
     data = [],
     label = '',
     value = 0,
     link = '',
-    formatHeading
+    formatHeading = data => data
   } = {}) {
 
     this.data = data;
     this.label = label;
     this.link = link;
-    this.value = value;
-    this.chartHeight = 50;
-
-    if (formatHeading) {
-      this.value = formatHeading(this.value);
-    }
-
+    this.value = formatHeading(value);
 
     this.render();
+  }
 
+  get template() {
+    return `
+    <div class="dashboard__chart_orders">
+    <div class="column-chart" style="--chart-height: ${this.chartHeight}}">
+      <div class="column-chart__title">
+        Total ${this.label}
+        ${this.showLink()}
+      </div>
+      <div class="column-chart__container">
+        <div data-element="header" class="column-chart__header">${this.value}</div>
+        <div data-element="body" class="column-chart__chart">
+          ${this.dataValue()}
+        </div>
+      </div>
+    </div>
+  </div>
+    `;
+  }
+
+  dataValue() {
+    const maxValue = Math.max(...this.data);
+    const scale = this.chartHeight / maxValue;
+
+    return this.data.map(el => {
+
+      const value = String(Math.floor(el * scale));
+      const dataMath = Math.round(el * 100 / maxValue) + '%';
+
+      return `
+        <div style="--value: ${value}" data-tooltip="${dataMath}"></div>
+      `;
+    }).join('');
+
+  }
+
+  showLink() {
+    return this.link ? `
+    <a href="${this.link}" class="column-chart__link">View all</a>
+    ` : '';
   }
 
 
 
   render() {
     const wrapper = document.createElement('div');
-    wrapper.classList.add('column-chart_loading');
-    wrapper.classList.add('column-chart');
-    wrapper.style = `--chart-height: ${this.chartHeight}`;
-    if (this.data.length) {
-      wrapper.classList.remove('column-chart_loading');
+    wrapper.innerHTML = this.template;
+
+    this.element = wrapper.firstElementChild;
+
+    if (!this.data.length) {
+      this.element.classList.add('column-chart_loading');
     }
-    wrapper.innerHTML = `
-      <div class="column-chart__title">
-        ${this.label}
-        <a href=${this.link} class="column-chart__link">View all</a>
-      </div>
-    `;
 
-    const container = document.createElement('div');
-    container.classList.add('column-chart__container');
+    this.subElements = this.getSubElemnts();
+  }
 
-    const wrapperContainer = wrapper.querySelector('.column-chart__title');
+  getSubElemnts() {
 
-    wrapperContainer.after(container);
+    const result = {};
 
-    const columnContainer = wrapper.querySelector('.column-chart__container');
+    const elements = this.element.querySelectorAll('[data-element]');
+    console.log(elements);
 
-    const header = document.createElement('div');
-    header.classList.add('column-chart__header');
-    header.dataset.element = 'header';
-    header.innerHTML = `${this.value}`;
-
-
-    columnContainer.append(header);
-
-    const body = document.createElement('div');
-    body.classList.add('column-chart__chart');
-    body.dataset.element = 'body';
-
-    columnContainer.append(body);
-
-    const bodyWrapper = wrapper.querySelector('.column-chart__chart');
-
-
-    this.data.forEach(el => {
-      const div = document.createElement('div');
-      const maxValue = Math.max(...this.data);
-      const scale = 50 / maxValue;
-      const value = String(Math.floor(el * scale));
-      div.style = `--value: ${value}`;
-      const dataMath = Math.round(el * 100 / maxValue) + '%';
-      div.dataset.tooltip = dataMath;
-
-      bodyWrapper.append(div);
-    });
-
-
-    this.element = wrapper;
-
-
+    for (const subElement of elements) {
+      const name = subElement.dataset.element;
+      result[name] = subElement;
+    }
+    // console.log(result.body.innerHTML);
+    return result;
   }
 
 
   update(data) {
     this.data = data;
-    this.render();
+
+    this.subElements.body.innerHTML = this.dataValue();
+
   }
 
   remove() {
@@ -97,7 +102,8 @@ export default class ColumnChart {
   }
 
   destroy() {
-
+    this.remove();
+    this.element = null;
+    this.subElements = {};
   }
-
 }
