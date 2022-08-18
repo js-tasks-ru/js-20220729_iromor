@@ -6,8 +6,8 @@ export default class SortableTable {
 
   constructor(headerConfig = [],
     { data = [], sorted = {
-      id,
-      order,
+      id: headerConfig.find(item => item.sortable).id,
+      order: 'asc'
     } } = {}, isSortLocally = true) {
     this.headerConfig = headerConfig;
     this.data = data;
