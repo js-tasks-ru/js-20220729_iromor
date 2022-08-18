@@ -1,12 +1,34 @@
+
 export default class SortableTable {
+
   element;
   subElement = {};
-  constructor(headerConfig = [], data = []) {
+
+  constructor(headerConfig = [],
+    { data = [], sorted = {
+      id,
+      order,
+    } } = {}, isSortLocally = true) {
     this.headerConfig = headerConfig;
     this.data = data;
+    this.sorted = sorted;
+    this.isSortLocally = isSortLocally;
 
     this.render();
+    this.initEventListeners();
+  }
 
+  initEventListeners() {
+    const sortTitles = this.element.querySelectorAll('.sortable-table__cell[data-sortable="true"]');
+    sortTitles.forEach((el) => {
+      el.addEventListener('pointerdown', () => {
+        if (el.dataset.order === 'asc') {
+          this.sort(el.dataset.id, 'desc');
+        } else {
+          this.sort(el.dataset.id, 'asc');
+        }
+      });
+    });
   }
 
   get getTemplate() {
@@ -80,6 +102,7 @@ export default class SortableTable {
   }
 
   sort(field, order) {
+
     const arr = [...this.data];
     const column = this.headerConfig.find(item => item.id === field);
     const { sortType } = column;
@@ -94,7 +117,12 @@ export default class SortableTable {
       if (sortType === 'string') {
         return direct * a[field].localeCompare(b[field], ['ru', 'en']);
       }
-      return direct * (a[field] - b[field]);
+      if (sortType === 'number') {
+        return direct * (a[field] - b[field]);
+      } else {
+        return direct * (a[field] - b[field]);
+      }
+
     });
 
     this.update(data, field, order);
@@ -109,7 +137,6 @@ export default class SortableTable {
 
       result[name] = subElement;
     }
-
     return result;
   }
 
@@ -137,6 +164,7 @@ export default class SortableTable {
 
     this.element = element.firstElementChild;
     this.subElements = this.getSubElements();
+    this.sort(this.sorted?.id, this.sorted?.order);
   }
 
   remove() {

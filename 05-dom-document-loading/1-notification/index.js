@@ -1,19 +1,24 @@
 export default class NotificationMessage {
+  static activeNotification;
+  timerId;
+  element;
 
-  constructor(message = 'Hello World', { duration = 1000, type = 'success' } = {}) {
+  constructor(message = '', { duration = 2000, type = 'success' } = {}) {
     this.message = message;
     this.duration = duration;
     this.type = type;
-    // this.notifications = [];
+    this.durationInSeconds = (duration / 1000) + 's';
+
+    this.render();
 
   }
 
   get getTemplate() {
     return `
-    <div class="notification ${this.type}" style="--value:20s">
+    <div class="notification ${this.type}" style="--value:${this.durationInSeconds}">
       <div class="timer"></div>
       <div class="inner-wrapper">
-       <div class="notification-header">${this.type}</div>
+       <div class="notification-header">Notification</div>
         <div class="notification-body">
           ${this.message}
         </div>
@@ -22,42 +27,42 @@ export default class NotificationMessage {
       `;
   }
 
-  render(html) {
+  render() {
     const element = document.createElement("div"); // (*)
 
     element.innerHTML = this.getTemplate;
 
     this.element = element.firstElementChild;
-    html.append(this.element);
 
   }
 
   show(html = document.body) {
 
-    const notification = document.querySelectorAll('.notification');
-
-    if (notification.length) {
-      for (const not of notification) {
-        not.remove();
-      }
+    if (NotificationMessage.activeNotification) {
+      NotificationMessage.activeNotification.remove();
     }
-    this.render(html);
-    setTimeout(() => {
+
+    html.append(this.element);
+
+    this.timerId = setTimeout(() => {
       this.remove();
     }, this.duration);
-  }
 
-  initEventListeners() {
-    // NOTE: в данном методе добавляем обработчики событий, если они есть
+    NotificationMessage.activeNotification = this;
   }
 
   remove() {
-    this.element.remove();
+    clearTimeout(this.timerId);
+
+    if (this.element) {
+      this.element.remove();
+    }
   }
 
   destroy() {
     this.remove();
     this.element = null;
-    // NOTE: удаляем обработчики событий, если они есть
+    NotificationMessage.activeNotification = null;
+
   }
 }

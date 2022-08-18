@@ -77,7 +77,7 @@ export default class ColumnChart {
   getSubElemnts() {
 
     const result = {};
-
+    
     const elements = this.element.querySelectorAll('[data-element]');
     console.log(elements);
 
