@@ -75,9 +75,8 @@ describe('dom-document-loading/sortable-table-v1', () => {
 
   it('should not have default sorting', () => {
     const columns = sortableTable.element.querySelectorAll('.sortable-table__cell[data-id]');
-    console.log(columns);
+
     const isSortingExists = [...columns].some(column => column.dataset.order);
-    console.log(isSortingExists);
 
     expect(isSortingExists).toBeFalsy();
   });

@@ -51,7 +51,7 @@ export default class SortableTable {
   headerTemplateData() {
     return this.headerConfig.map(el => {
       return `
-        <div class="sortable-table__cell" data-id=${el.id} data-sortable=${el.sortable} data-order="">
+        <div class="sortable-table__cell" data-id=${el.id} data-sortable=${el.sortable} data-order="default">
           <span>${el.title}</span>
           ${this.arrowTemplate()}
         </div>
