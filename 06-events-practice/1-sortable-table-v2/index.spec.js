@@ -116,6 +116,7 @@ describe('events-practice/sortable-table-v2', () => {
     price.dispatchEvent(pointerdown);
 
     const { body } = sortableTable.subElements;
+    console.log(body);
     const firstRow = body.firstElementChild;
     const lastRow = body.lastElementChild;
 
@@ -133,11 +134,11 @@ describe('events-practice/sortable-table-v2', () => {
 
     price.dispatchEvent(pointerdown);
 
-    expect(price).toContainHTML(`<span data-element="arrow" class="sortable-table__sort-arrow">`);
+    expect(price).toContainHTML(`<span data-element="arrow" class="sortable-table__sort-arrow"`);
 
     sales.dispatchEvent(pointerdown);
 
-    expect(sales).toContainHTML(`<span data-element="arrow" class="sortable-table__sort-arrow">`);
+    expect(sales).toContainHTML(`<span data-element="arrow" class="sortable-table__sort-arrow"`);
   });
 
   it('should have ability to be destroyed', () => {
