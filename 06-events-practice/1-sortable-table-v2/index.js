@@ -1,13 +1,11 @@
-
 export default class SortableTable {
-
   element;
   subElement = {};
 
   constructor(headerConfig = [],
     { data = [], sorted = {
       id,
-      order,
+      order
     } } = {}, isSortLocally = true) {
     this.headerConfig = headerConfig;
     this.data = data;
@@ -18,15 +16,25 @@ export default class SortableTable {
     this.initEventListeners();
   }
 
+
   initEventListeners() {
     const sortTitles = this.element.querySelectorAll('.sortable-table__cell[data-sortable="true"]');
+    const allColumns = this.element.querySelectorAll('.sortable-table__cell[data-id]');
+
     sortTitles.forEach((el) => {
       el.addEventListener('pointerdown', () => {
-        if (el.dataset.order === 'asc') {
-          this.sort(el.dataset.id, 'desc');
-        } else {
-          this.sort(el.dataset.id, 'asc');
-        }
+        const { id, order } = el.dataset;
+        const newOrder = order === 'asc' ? 'desc' : 'asc';
+        const sortedData = this.sort(id, newOrder);
+
+        // NOTE: Remove sorting arrow from other columns
+        allColumns.forEach(column => {
+          column.dataset.order = '';
+        });
+
+        el.dataset.order = newOrder;
+
+        this.subElements.body.innerHTML = this.getTableRows(sortedData);
       });
     });
   }
@@ -38,7 +46,7 @@ export default class SortableTable {
         ${this.headerTemplate()}
         ${this.getBody()}
       <div data-element="loading" class="loading-line sortable-table__loading-line"></div>
-  
+
       <div data-element="emptyPlaceholder" class="sortable-table__empty-placeholder">
         <div>
           <p>No products satisfies your filter criteria</p>
@@ -49,7 +57,10 @@ export default class SortableTable {
   }
 
   headerTemplateData() {
+
     return this.headerConfig.map(el => {
+      const order = this.sorted.id === el.id ? this.sorted.order : 'asc';
+
       return `
         <div class="sortable-table__cell" data-id=${el.id} data-sortable=${el.sortable} data-order="default">
           <span>${el.title}</span>
@@ -102,7 +113,7 @@ export default class SortableTable {
   }
 
   sort(field, order) {
-
+    console.error(field, order);
     const arr = [...this.data];
     const column = this.headerConfig.find(item => item.id === field);
     const { sortType } = column;
@@ -113,7 +124,7 @@ export default class SortableTable {
     };
     const direct = directions[order];
 
-    const data = arr.sort((a, b) => {
+    return arr.sort((a, b) => {
       if (sortType === 'string') {
         return direct * a[field].localeCompare(b[field], ['ru', 'en']);
       }
@@ -124,8 +135,6 @@ export default class SortableTable {
       }
 
     });
-
-    this.update(data, field, order);
   }
 
   getSubElements() {
@@ -139,23 +148,6 @@ export default class SortableTable {
     }
     return result;
   }
-
-
-  update(data, field, order) {
-
-    const allColumns = this.element.querySelectorAll('.sortable-table__cell[data-id]');
-    const currentColumn = this.element.querySelector(`.sortable-table__cell[data-id="${field}"]`);
-
-    // NOTE: Remove sorting arrow from other columns
-    allColumns.forEach(column => {
-      column.dataset.order = '';
-    });
-
-    currentColumn.dataset.order = order;
-
-    this.subElements.body.innerHTML = this.getTableRows(data);
-  }
-
 
   render() {
     const element = document.createElement("div");
@@ -179,4 +171,3 @@ export default class SortableTable {
     this.subElements = {};
   }
 }
-

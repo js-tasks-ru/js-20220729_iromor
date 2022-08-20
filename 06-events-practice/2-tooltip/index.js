@@ -70,6 +70,9 @@ class Tooltip {
   }
 
   destroy() {
+    document.removeEventListener('pointerover', handler);
+    document.removeEventListener('pointermove', handler);
+    // pointerout
     this.remove();
     this.element = null;
     Tooltip.activeNotification = null;
