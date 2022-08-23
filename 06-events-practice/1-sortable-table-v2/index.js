@@ -4,8 +4,8 @@ export default class SortableTable {
 
   constructor(headerConfig = [],
     { data = [], sorted = {
-      id,
-      order
+      id: headerConfig.find(item => item.sortable).id,
+      order: 'asc'
     } } = {}, isSortLocally = true) {
     this.headerConfig = headerConfig;
     this.data = data;
@@ -13,30 +13,31 @@ export default class SortableTable {
     this.isSortLocally = isSortLocally;
 
     this.render();
-    this.initEventListeners();
+  }
+
+
+  onSortClick = event => {
+    const column = event.target.closest('[data-sortable="true"]');
+
+    if (column) {
+      const { id, order } = column.dataset;
+      const newOrder = order === 'asc' ? 'desc' : 'asc';
+      const sortedData = this.sort(id, newOrder);
+      const arrow = column.querySelector('.sortable-table__sort-arrow');
+
+      column.dataset.order = newOrder;
+
+      if (!arrow) {
+        column.append(this.subElements.arrow);
+      }
+
+      this.subElements.body.innerHTML = this.getTableRows(sortedData);
+    }
   }
 
 
   initEventListeners() {
-    const sortTitles = this.element.querySelectorAll('.sortable-table__cell[data-sortable="true"]');
-    const allColumns = this.element.querySelectorAll('.sortable-table__cell[data-id]');
-
-    sortTitles.forEach((el) => {
-      el.addEventListener('pointerdown', () => {
-        const { id, order } = el.dataset;
-        const newOrder = order === 'asc' ? 'desc' : 'asc';
-        const sortedData = this.sort(id, newOrder);
-
-        // NOTE: Remove sorting arrow from other columns
-        allColumns.forEach(column => {
-          column.dataset.order = '';
-        });
-
-        el.dataset.order = newOrder;
-
-        this.subElements.body.innerHTML = this.getTableRows(sortedData);
-      });
-    });
+    this.subElements.header.addEventListener('pointerdown', this.onSortClick);
   }
 
   get getTemplate() {
@@ -56,34 +57,33 @@ export default class SortableTable {
       `;
   }
 
-  headerTemplateData() {
+  getHeaderRow({ id, title, sortable }) {
+    const order = this.sorted.id === id ? this.sorted.order : 'asc';
 
-    return this.headerConfig.map(el => {
-      const order = this.sorted.id === el.id ? this.sorted.order : 'asc';
-
-      return `
-        <div class="sortable-table__cell" data-id=${el.id} data-sortable=${el.sortable} data-order="default">
-          <span>${el.title}</span>
-          ${this.arrowTemplate()}
-        </div>
-      `;
-    }).join('');
+    return `
+      <div class="sortable-table__cell" data-id="${id}" data-sortable="${sortable}" data-order="${order}">
+        <span>${title}</span>
+        ${this.getHeaderSortingArrow(id)}
+      </div>
+    `;
   }
 
   headerTemplate() {
     return `
-    <div data-element="header" class="sortable-table__header sortable-table__row">
-      ${this.headerTemplateData()}
-    </div>
+      <div data-element="header" class="sortable-table__header sortable-table__row">
+        ${this.headerConfig.map(item => this.getHeaderRow(item)).join('')}
+      </div>
     `;
   }
 
-  arrowTemplate() {
-    return `
-      <span data-element="arrow" class="sortable-table__sort-arrow">
-        <span class="sort-arrow"></span>
-      </span>
-    `;
+  getHeaderSortingArrow(id) {
+    const isOrderExist = this.sorted.id === id ? this.sorted.order : '';
+
+    return isOrderExist
+      ? `<span data-element="arrow" class="sortable-table__sort-arrow">
+          <span class="sort-arrow"></span>
+        </span>`
+      : '';
   }
 
   getBody() {
@@ -113,7 +113,7 @@ export default class SortableTable {
   }
 
   sort(field, order) {
-    console.error(field, order);
+
     const arr = [...this.data];
     const column = this.headerConfig.find(item => item.id === field);
     const { sortType } = column;
@@ -133,7 +133,6 @@ export default class SortableTable {
       } else {
         return direct * (a[field] - b[field]);
       }
-
     });
   }
 
@@ -157,6 +156,8 @@ export default class SortableTable {
     this.element = element.firstElementChild;
     this.subElements = this.getSubElements();
     this.sort(this.sorted?.id, this.sorted?.order);
+
+    this.initEventListeners();
   }
 
   remove() {

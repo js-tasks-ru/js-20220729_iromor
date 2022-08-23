@@ -19,6 +19,7 @@ export default class ColumnChart {
   } = {}) {
 
     this.data = [];
+    this.fullData = [];
     this.label = label;
     this.link = link;
     this.url = url;
@@ -41,7 +42,7 @@ export default class ColumnChart {
         ${this.showLink()}
       </div>
       <div class="column-chart__container">
-          ${this.getHeader()}
+      <div data-element="header" class="column-chart__header">${this.value}</div>
         <div data-element="body" class="column-chart__chart">
           ${this.dataValue()}
         </div>
@@ -52,18 +53,13 @@ export default class ColumnChart {
   }
 
   fetchData() {
-    const from = this.from.toISOString().split('T')[0];
-    const to = this.to.toISOString().split('T')[0];
-    const _from = '2022-05-20';
-    const _to = '2022-07-07';
-    const _fromMs = Number(new Date(_from))
-    const _toMs = Number(new Date(_to))
 
     try {
-      fetchJson(`${BACKEND_URL}/${this.url}`)
-        .then(data => Object.entries(data))
-        .then(arr => arr.filter(([key]) => Number(new Date(key)) >= _fromMs && Number(new Date(key)) <= _toMs))
-        .then(filteredArr => this.update(filteredArr));
+      fetchJson(`${BACKEND_URL}/${this.url}?from=${this.from}&to=${this.to}`)
+        .then(data => {
+          this.data = Object.entries(data);
+          this.update();
+        });
     } catch (err) {
       console.log(err);
     }
@@ -71,12 +67,17 @@ export default class ColumnChart {
 
   dataValue() {
 
-    const maxValue = Math.max(...this.data);
-    const scale = this.chartHeight / maxValue;
-
-    // this.element.classList.remove('column-chart_loading');
     if (this.data.length) {
-      return this.data.map(el => {
+      this.element.classList.remove('column-chart_loading');
+
+      const newArr = [...this.data].map(el => el[1]);
+      
+      this.subElements.header.innerText = newArr.reduce((acc, val) => acc + val, 0);
+
+      const maxValue = Math.max(...newArr);
+      const scale = this.chartHeight / maxValue;
+
+      return newArr.map(el => {
         const value = String(Math.floor(el * scale));
         const dataMath = Math.round(el * 100 / maxValue) + '%';
 
@@ -93,13 +94,6 @@ export default class ColumnChart {
     <a href="${this.link}" class="column-chart__link">View all</a>
     ` : '';
   }
-
-  getHeader() {
-    return `
-      <div data-element="header" class="column-chart__header">${this.value}</div>
-    `;
-  }
-
 
 
   render() {
@@ -130,39 +124,23 @@ export default class ColumnChart {
   }
 
 
-  async fetchUpdate(from, to) {
-
-    const startInput = from.toISOString();
-    const endInput = to.toISOString();
-    console.log(startInput, endInput);
-
-    try {
-      const response = await fetchJson(`${BACKEND_URL}/${this.url}?from=${startInput}&to=${endInput}`);
-      this.data = await response.json();
-      console.log(data);
-    } catch (err) {
-      alert('err');
-    }
-
-    this.subElements.body.innerHTML = this.dataValue();
-  }
-
-  update(from, to) {
-
-  }
-
-  oldUpdate(data) {
-    this.data = data.map(el => el[1]);
-    const value = this.data.reduce((acc, val) => acc + val, 0);
-    this.value = value;
+  async update(from, to) {
 
     if (this.data.length) {
-      this.element.classList.remove('column-chart_loading');
+      this.subElements.body.innerHTML = this.dataValue();
+    } else {
+      let response;
+      try {
+        response = await fetchJson(`${BACKEND_URL}/${this.url}?from=${from}&to=${to}`);
+
+        this.data = Object.entries(response);
+        this.subElements.body.innerHTML = this.dataValue();
+
+      } catch (err) {
+        alert('err');
+      }
+      return response;
     }
-
-    this.subElements.header.innerText = this.value;
-    this.subElements.body.innerHTML = this.dataValue();
-
   }
 
   remove() {
