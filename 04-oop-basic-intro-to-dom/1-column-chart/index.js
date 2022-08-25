@@ -85,7 +85,6 @@ export default class ColumnChart {
       const name = subElement.dataset.element;
       result[name] = subElement;
     }
-    // console.log(result.body.innerHTML);
     return result;
   }
 

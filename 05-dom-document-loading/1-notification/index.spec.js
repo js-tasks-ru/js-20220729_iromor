@@ -58,7 +58,6 @@ describe('dom-document-loading/notification', () => {
 
   it('should have ability to set message', () => {
     notificationMessage = new NotificationMessage('hi');
-    console.log(notificationMessage);
 
     expect(notificationMessage.element).toHaveTextContent('hi');
   });

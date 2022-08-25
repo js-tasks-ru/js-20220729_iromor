@@ -14,23 +14,19 @@ export default class ColumnChart {
     },
     label = '',
     link = '',
-    value = 0,
     formatHeading = data => data
   } = {}) {
 
     this.data = [];
-    this.fullData = [];
     this.label = label;
     this.link = link;
     this.url = url;
     this.from = from;
     this.to = to;
     this.status = false;
-    this.value = formatHeading(value);
-
+    // this.value = formatHeading(value);
 
     this.render();
-    this.fetchData();
   }
 
   template() {
@@ -42,7 +38,7 @@ export default class ColumnChart {
         ${this.showLink()}
       </div>
       <div class="column-chart__container">
-      <div data-element="header" class="column-chart__header">${this.value}</div>
+        <div data-element="header" class="column-chart__header">${this.value}</div>
         <div data-element="body" class="column-chart__chart">
           ${this.dataValue()}
         </div>
@@ -52,32 +48,45 @@ export default class ColumnChart {
     `;
   }
 
-  fetchData() {
+  async fetchData() {
+    const from = this.from.toISOString().split('T')[0];
+    const to = this.to.toISOString().split('T')[0];
+    const _from = '2022-05-20';
+    const _to = '2022-07-07';
+
 
     try {
-      fetchJson(`${BACKEND_URL}/${this.url}?from=${this.from}&to=${this.to}`)
-        .then(data => {
-          this.data = Object.entries(data);
-          this.update();
-        });
+      const response = await fetchJson(`${BACKEND_URL}/${this.url}`);
+      const arr = Object.entries(response);
+      let count = 0;
+      const result = [];
+      arr.forEach(([key, value], i) => {
+        if (key === _from) {
+          count = i;
+        }
+        if (key === _to) {
+          count = 0;
+        }
+        if (count < arr.length && count) {
+          result.push(value);
+        }
+      });
+      this.data = result;
     } catch (err) {
       console.log(err);
     }
+
   }
 
   dataValue() {
 
+    const maxValue = Math.max(...this.data);
+    const scale = this.chartHeight / maxValue;
+
+    // this.element.classList.remove('column-chart_loading');
     if (this.data.length) {
-      this.element.classList.remove('column-chart_loading');
-
-      const newArr = [...this.data].map(el => el[1]);
-      
-      this.subElements.header.innerText = newArr.reduce((acc, val) => acc + val, 0);
-
-      const maxValue = Math.max(...newArr);
-      const scale = this.chartHeight / maxValue;
-
-      return newArr.map(el => {
+      console.log(1);
+      return this.data.map(el => {
         const value = String(Math.floor(el * scale));
         const dataMath = Math.round(el * 100 / maxValue) + '%';
 
@@ -96,7 +105,8 @@ export default class ColumnChart {
   }
 
 
-  render() {
+
+  async render() {
     const wrapper = document.createElement('div');
 
     wrapper.innerHTML = this.template();
@@ -106,6 +116,7 @@ export default class ColumnChart {
     if (!this.data.length) {
       this.element.classList.add('column-chart_loading');
     }
+    await this.fetchData();
 
     this.subElements = this.getSubElemnts();
   }
@@ -126,21 +137,19 @@ export default class ColumnChart {
 
   async update(from, to) {
 
-    if (this.data.length) {
-      this.subElements.body.innerHTML = this.dataValue();
-    } else {
-      let response;
-      try {
-        response = await fetchJson(`${BACKEND_URL}/${this.url}?from=${from}&to=${to}`);
+    const startInput = from.toISOString();
+    const endInput = to.toISOString();
+    console.log(startInput, endInput);
 
-        this.data = Object.entries(response);
-        this.subElements.body.innerHTML = this.dataValue();
-
-      } catch (err) {
-        alert('err');
-      }
-      return response;
+    try {
+      const response = await fetchJson(`${BACKEND_URL}/${this.url}?from=${startInput}&to=${endInput}`);
+      this.data = await response.json();
+      console.log(data);
+    } catch (err) {
+      alert('err');
     }
+
+    this.subElements.body.innerHTML = this.dataValue();
   }
 
   remove() {
